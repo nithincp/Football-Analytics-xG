@@ -8,6 +8,11 @@ Original file is located at
 """
 
 import pandas as pd
+import numpy as np
+from scipy.stats import poisson
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 
 pd.set_option('display.max_rows', 1000)
 
@@ -108,3 +113,53 @@ away_team_xg_strength_defense['xGAway_defense_rating'] = (away_team_xg_strength_
 away_team_xg_strength_defense = away_team_xg_strength_defense.reset_index(drop = True)
 
 away_team_xg_strength_defense.sort_values('xGAway_defense_rating')
+
+chelsea_home_offense_rating = 0.916056
+liverpool_away_defense_rating = 1.019320
+
+chelsea_home_expected_xg = (chelsea_home_offense_rating * liverpool_away_defense_rating) * league_Mean_Home_xG
+
+liverpool_away_offense_rating = 1.332498
+chelsea_home_defense_rating = 0.981621
+
+liverpool_away_expected_xg = (liverpool_away_offense_rating * chelsea_home_defense_rating) * league_Mean_Away_xG
+
+chelsea_home_expected_xg
+
+liverpool_away_expected_xg
+
+"""Poisson Distribution to calculate the probabilites of the match result
+
+"""
+
+home_expectancy = chelsea_home_expected_xg
+away_expectancy = liverpool_away_expected_xg
+
+
+max_score = 7
+score_range = np.arange(0, max_score+1)
+
+home_pmf = poisson.pmf(score_range, home_expectancy)
+away_pmf = poisson.pmf(score_range, away_expectancy)
+
+# calculate the outer product of the home and away PMFs
+score_prob_matrix = np.outer(home_pmf, away_pmf)
+
+# reshape the matrix into a square matrix of score probabilities
+score_prob_matrix = score_prob_matrix.reshape(max_score+1, max_score+1)
+
+
+# set the figure size
+fig, ax = plt.subplots(figsize=(12, 8))
+
+# create a heatmap using seaborn
+sns.set()
+sns.heatmap(score_prob_matrix, cmap="coolwarm", annot=True, fmt=".4f", square=True, cbar_kws={"shrink": 0.7}, ax=ax)
+
+# set the axis labels and title
+plt.xlabel("Away goals")
+plt.ylabel("Home goals")
+plt.title("Score probability matrix")
+
+# display the plot
+plt.show()
